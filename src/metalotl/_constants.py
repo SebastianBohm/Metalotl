@@ -15,7 +15,7 @@ CLUSTERING_OPTIONS = {
 DATA = np.load(DATA_DIR / 'samples.npy', allow_pickle=True).tolist()
 
 # Load annotation metadata for differential gene expression markers
-ANNOTATION_FILE = BASE_DIR.parent / 'Result' / 'Adult_meta_DGE_markers.csv'
+ANNOTATION_FILE = DATA_DIR / 'Adult_meta_DGE_markers.csv'
 try:
     ANNOTATION_DF = pd.read_csv(ANNOTATION_FILE, index_col=0, low_memory=False)
     

@@ -1,6 +1,5 @@
 # Metalotl 🦎
 
-[![Install](https://github.com/quadbio/metalotl/actions/workflows/install.yml/badge.svg)](https://github.com/quadbio/metalotl/actions/workflows/install.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Shiny](https://img.shields.io/badge/shiny-python-green.svg)](https://shiny.posit.co/py/)
 
@@ -77,13 +76,14 @@ data/
 ├── Meta_thalamencephalon_rep1_DP8400015234BL_B4-1_region_ann.h5ad
 ├── Meta_thalamencephalon_rep3_DP8400015234BL_B5-2_region_ann.h5ad
 ├── Meta_thalamencephalon_rep5_DP8400015234BL_B3-2_region_ann.h5ad
+├── Adult_meta_DGE_markers.csv
 ├── genes.npy
 └── samples.npy
 ```
 
 ### Gene Annotations
 
-Gene annotations are automatically loaded from `../Result/Adult_meta_DGE_markers.csv` (relative to the Metalotl directory).
+Gene annotations are automatically loaded from `data/Adult_meta_DGE_markers.csv`.
 
 ---
 

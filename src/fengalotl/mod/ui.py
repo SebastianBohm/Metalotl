@@ -81,7 +81,7 @@ app_ui = ui.page_navbar(
     ui.nav_spacer(),
     ui.nav_control(ui.input_dark_mode(id="mode", mode = 'dark')),
 
-    title=ui.HTML(f"Fengalotl - Axolotl Spatial Data<br><span style='font-size: 12px; display: block; '>app v{__version__}</span>"),
+    title=ui.HTML(f"Fengalotl - Metamorphosed Axolotl Spatial Data<br><span style='font-size: 12px; display: block; '>app v{__version__}</span>"),
     id="page"
     
 )

@@ -4,18 +4,18 @@
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Shiny](https://img.shields.io/badge/shiny-python-green.svg)](https://shiny.posit.co/py/)
 
-An interactive Shiny application for exploring spatial transcriptomics data from the axolotl brain.
+An interactive Shiny application for exploring spatial transcriptomics data from the metamorphosed axolotl brain.
 
 ## 📋 Overview
 
-Fengalotl provides an interactive web interface to explore spatial gene expression data from adult axolotl brain regions, including:
+Fengalotl provides an interactive web interface to explore spatial gene expression data from metamorphosed axolotl brain regions, including:
 
 | Brain Region | Replicates |
 |--------------|------------|
 | 🧠 Metencephalon (hindbrain) | 2 |
 | 👃 Olfactory bulb | 2 |
 | 🔴 Pituitary | 1 |
-| 🧩 Telencephalon (forebrain) | 2 |
+| 🧩 Telencephalon (forebrain) | 1 |
 | 🔷 Thalamencephalon (diencephalon) | 3 |
 
 ## ✨ Features
@@ -68,16 +68,15 @@ Place the `.h5ad` data files in the `data/` directory:
 
 ```
 data/
-├── Adult_metencephalon_rep1_2_DP8400015234BL_B1-2_region_ann.h5ad
-├── Adult_metencephalon_rep3_DP8400015234BL_A3-1_region_ann.h5ad
-├── Adult_olfactory_bulb_rep1_DP8400015234BL_A1-1_region_ann.h5ad
-├── Adult_olfactory_bulb_rep2_DP8400015234BL_A2-2_region_ann.h5ad
-├── Adult_pituitary_rep1_2_DP8400015234BL_B1-2_region_ann.h5ad
-├── Adult_telencephalon_rep1_DP8400015234BL_A2-1_region_ann.h5ad
-├── Adult_telencephalon_rep3_DP8400015234BL_A4-1_region_ann.h5ad
-├── Adult_thalamencephalon_rep1_DP8400015234BL_A5-1_region_ann.h5ad
-├── Adult_thalamencephalon_rep2_DP8400015234BL_A5-2_region_ann.h5ad
-├── Adult_thalamencephalon_rep3_DP8400015234BL_A6-1_region_ann.h5ad
+├── Meta_metencephalon_rep1_DP8400015649BR_C1-2_region_ann.h5ad
+├── Meta_metencephalon_rep2_DP8400015649BR_C1-1_region_ann.h5ad
+├── Meta_olfactory_bulb_rep1_DP8400015234BL_B2-1_region_ann.h5ad
+├── Meta_olfactory_bulb_rep2_DP8400015234BL_B3-1_region_ann.h5ad
+├── Meta_pituitary_rep5_DP8400015234BL_B3-2_region_ann.h5ad
+├── Meta_telencephalon_rep3_DP8400015234BL_B5-1_region_ann.h5ad
+├── Meta_thalamencephalon_rep1_DP8400015234BL_B4-1_region_ann.h5ad
+├── Meta_thalamencephalon_rep3_DP8400015234BL_B5-2_region_ann.h5ad
+├── Meta_thalamencephalon_rep5_DP8400015234BL_B3-2_region_ann.h5ad
 ├── genes.npy
 └── samples.npy
 ```

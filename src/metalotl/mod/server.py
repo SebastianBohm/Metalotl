@@ -1,18 +1,18 @@
 from shiny import reactive, render
 from shinywidgets import render_widget
 
-from fengalotl.fct.load import get_data as _get_data
+from metalotl.fct.load import get_data as _get_data
 
-from fengalotl.fct.umap_widget import plot_umap as _plot_umap
-from fengalotl.fct.umap_widget import add_umap_clusters as _add_umap_clusters
-from fengalotl.fct.umap_widget import add_umap_expression as _add_umap_expression
+from metalotl.fct.umap_widget import plot_umap as _plot_umap
+from metalotl.fct.umap_widget import add_umap_clusters as _add_umap_clusters
+from metalotl.fct.umap_widget import add_umap_expression as _add_umap_expression
 
-from fengalotl.fct.spatial_widget import plot_space as _plot_space
-from fengalotl.fct.spatial_widget import add_space_clusters as _add_space_clusters
-from fengalotl.fct.spatial_widget import add_space_expression as _add_space_expression
+from metalotl.fct.spatial_widget import plot_space as _plot_space
+from metalotl.fct.spatial_widget import add_space_clusters as _add_space_clusters
+from metalotl.fct.spatial_widget import add_space_expression as _add_space_expression
 
-from fengalotl.fct.expression import plot_gene_expression as _plot_gene_expression
-from fengalotl.fct.expression import plot_de as _plot_de
+from metalotl.fct.expression import plot_gene_expression as _plot_gene_expression
+from metalotl.fct.expression import plot_de as _plot_de
 
 import matplotlib.pyplot as plt
 plt.style.use('dark_background')

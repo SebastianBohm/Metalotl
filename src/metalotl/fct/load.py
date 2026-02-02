@@ -2,7 +2,7 @@ import os
 import scanpy as sc
 from functools import lru_cache
 
-from fengalotl._constants import *
+from metalotl._constants import *
 
 # Cache for loaded datasets - stores up to 5 datasets in memory
 _data_cache = {}

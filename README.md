@@ -1,6 +1,6 @@
-# Fengalotl 🦎
+# Metalotl 🦎
 
-[![Install](https://github.com/quadbio/fengalotl/actions/workflows/install.yml/badge.svg)](https://github.com/quadbio/fengalotl/actions/workflows/install.yml)
+[![Install](https://github.com/quadbio/metalotl/actions/workflows/install.yml/badge.svg)](https://github.com/quadbio/metalotl/actions/workflows/install.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Shiny](https://img.shields.io/badge/shiny-python-green.svg)](https://shiny.posit.co/py/)
 
@@ -8,7 +8,7 @@ An interactive Shiny application for exploring spatial transcriptomics data from
 
 ## 📋 Overview
 
-Fengalotl provides an interactive web interface to explore spatial gene expression data from metamorphosed axolotl brain regions, including:
+Metalotl provides an interactive web interface to explore spatial gene expression data from metamorphosed axolotl brain regions, including:
 
 | Brain Region | Replicates |
 |--------------|------------|
@@ -43,16 +43,16 @@ Fengalotl provides an interactive web interface to explore spatial gene expressi
 
 ```bash
 # Create a new conda environment
-mamba create -n fengalotl python=3.12
+mamba create -n metalotl python=3.12
 
 # Activate the environment
-mamba activate fengalotl
+mamba activate metalotl
 
 # Clone the repository
-git clone --branch main https://github.com/quadbio/fengalotl.git
+git clone --branch main https://github.com/quadbio/metalotl.git
 
 # Navigate to the directory
-cd fengalotl
+cd metalotl
 
 # Install the package
 pip install -e .
@@ -83,7 +83,7 @@ data/
 
 ### Gene Annotations
 
-Gene annotations are automatically loaded from `../Result/Adult_meta_DGE_markers.csv` (relative to the Fengalotl directory).
+Gene annotations are automatically loaded from `../Result/Adult_meta_DGE_markers.csv` (relative to the Metalotl directory).
 
 ---
 
@@ -93,13 +93,13 @@ Gene annotations are automatically loaded from `../Result/Adult_meta_DGE_markers
 
 ```bash
 # Activate the environment
-mamba activate fengalotl
+mamba activate metalotl
 
 # Navigate to the project directory
-cd fengalotl
+cd metalotl
 
 # Run the Shiny app
-shiny run src/fengalotl/app.py
+shiny run src/metalotl/app.py
 ```
 
 Open your browser: **http://localhost:8000**
@@ -113,9 +113,9 @@ ssh -L 12345:localhost:8000 username@server
 
 2. On the server, run:
 ```bash
-mamba activate fengalotl
-cd fengalotl
-shiny run src/fengalotl/app.py --port 8000
+mamba activate metalotl
+cd metalotl
+shiny run src/metalotl/app.py --port 8000
 ```
 
 3. Access locally at: **http://localhost:12345**
@@ -137,9 +137,9 @@ shiny run src/fengalotl/app.py --port 8000
 ## 📁 Project Structure
 
 ```
-Fengalotl/
+Metalotl/
 ├── data/                       # H5AD data files
-├── src/fengalotl/
+├── src/metalotl/
 │   ├── __init__.py
 │   ├── _constants.py           # Configuration & gene annotations
 │   ├── app.py                  # Main Shiny app entry point

@@ -1,5 +1,5 @@
-from fengalotl.fct.load import get_data
-from fengalotl._constants import GENE_ANNOTATION
+from metalotl.fct.load import get_data
+from metalotl._constants import GENE_ANNOTATION
 import matplotlib.pyplot as plt
 import scanpy as sc
 

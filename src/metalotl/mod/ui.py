@@ -1,9 +1,9 @@
 from shiny import ui
 from shinywidgets import output_widget
 
-from fengalotl._constants import DATA, GENES_DISPLAY, CLUSTERING_OPTIONS
-from fengalotl.js._format import DROPDOWN_CONFIG
-from fengalotl import __version__
+from metalotl._constants import DATA, GENES_DISPLAY, CLUSTERING_OPTIONS
+from metalotl.js._format import DROPDOWN_CONFIG
+from metalotl import __version__
 
 # Create gene choices dict for selectize: {value: label}
 GENE_CHOICES = {'': '', **GENES_DISPLAY}
@@ -81,7 +81,7 @@ app_ui = ui.page_navbar(
     ui.nav_spacer(),
     ui.nav_control(ui.input_dark_mode(id="mode", mode = 'dark')),
 
-    title=ui.HTML(f"Fengalotl - Metamorphosed Axolotl Spatial Data<br><span style='font-size: 12px; display: block; '>app v{__version__}</span>"),
+    title=ui.HTML(f"Metalotl - Metamorphosed Axolotl Spatial Data<br><span style='font-size: 12px; display: block; '>app v{__version__}</span>"),
     id="page"
     
 )

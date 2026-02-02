@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='fengalotl',
+    name='metalotl',
     use_scm_version=True,
     setup_requires=['setuptools-scm'],
     install_requires=[

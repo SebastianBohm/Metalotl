@@ -25,4 +25,4 @@ jobs:
 
       - name: Verify installation
         run: |
-          python -c "import fengalotl"
+          python -c "import metalotl"

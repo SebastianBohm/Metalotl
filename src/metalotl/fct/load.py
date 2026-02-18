@@ -1,28 +1,107 @@
 import os
 import scanpy as sc
-from functools import lru_cache
+from metalotl._constants import DATA_DIR, GENE_ANNOTATION
 
-from metalotl._constants import *
 
-# Cache for loaded datasets - stores up to 5 datasets in memory
-_data_cache = {}
+# In-memory cache: filepath -> (adata, gene_choices, mtime)
+_data_cache: dict = {}
+
+
+def _build_gene_choices(adata) -> dict:
+    """Build the selectize choices dict from adata.var_names — called once per file."""
+    choices = {'': ''}
+    for gene_id in map(str, adata.var_names):
+        annotated = GENE_ANNOTATION.get(gene_id, gene_id)
+        choices[gene_id] = f"{annotated} ({gene_id})" if annotated != gene_id else gene_id
+    return choices
+
 
 def _load_h5ad(filepath):
-    """Load h5ad file with caching."""
-    if filepath not in _data_cache:
-        _data_cache[filepath] = sc.read_h5ad(filepath)
-    return _data_cache[filepath]
+    """Load an h5ad fully into memory with mtime-based caching.
 
-def get_data(input):
-        
-    if not (name := input.select_dataset()):
-        return None
-    
+    Full in-memory load is used (not backed='r') because gene-expression slicing
+    on a backed dataset is ~7x slower, and these files load in <0.1s regardless.
+    Returns (adata, gene_choices).
+    """
     try:
-        filepath = os.path.join(DATA_DIR, name + '.h5ad')
-        adata = _load_h5ad(filepath)
-        return adata
-    
-    except (FileNotFoundError, IOError):
-        print("File not found")
+        mtime = os.path.getmtime(filepath)
+    except Exception:
+        adata = sc.read_h5ad(filepath)
+        return adata, _build_gene_choices(adata)
+
+    entry = _data_cache.get(filepath)
+    if entry is not None:
+        cached_adata, cached_choices, cached_mtime = entry
+        if cached_mtime == mtime:
+            return cached_adata, cached_choices
+
+    adata = sc.read_h5ad(filepath)
+    choices = _build_gene_choices(adata)
+    _data_cache[filepath] = (adata, choices, mtime)
+    return adata, choices
+
+
+def clear_data_cache():
+    """Clear the in-memory AnnData cache."""
+    _data_cache.clear()
+
+
+def get_data(input_or_name):
+    """Return an AnnData for the given dataset name or Shiny inputs object."""
+    name = None
+    try:
+        if hasattr(input_or_name, 'select_dataset') and callable(input_or_name.select_dataset):
+            name = input_or_name.select_dataset()
+        else:
+            name = input_or_name
+    except Exception:
+        name = input_or_name
+
+    if not name:
         return None
+
+    try:
+        stem = name[:-len('_final')] if name.endswith('_final') else name
+        final_path = DATA_DIR / (stem + '_final.h5ad')
+        fallback_path = DATA_DIR / (stem + '.h5ad')
+        filepath = final_path if final_path.exists() else fallback_path
+
+        if not filepath.exists():
+            raise FileNotFoundError(f"Neither {final_path} nor {fallback_path} exist")
+
+        adata, _ = _load_h5ad(str(filepath))
+        return adata
+
+    except (FileNotFoundError, IOError) as e:
+        print("File not found:", e)
+        return None
+
+
+def get_gene_choices(input_or_name) -> dict:
+    """Return the pre-built gene selectize choices dict for the given dataset."""
+    name = None
+    try:
+        if hasattr(input_or_name, 'select_dataset') and callable(input_or_name.select_dataset):
+            name = input_or_name.select_dataset()
+        else:
+            name = input_or_name
+    except Exception:
+        name = input_or_name
+
+    if not name:
+        return {}
+
+    try:
+        stem = name[:-len('_final')] if name.endswith('_final') else name
+        final_path = DATA_DIR / (stem + '_final.h5ad')
+        fallback_path = DATA_DIR / (stem + '.h5ad')
+        filepath = final_path if final_path.exists() else fallback_path
+
+        if not filepath.exists():
+            return {}
+
+        _, choices = _load_h5ad(str(filepath))
+        return choices
+
+    except Exception:
+        return {}

@@ -17,14 +17,17 @@ Metalotl provides an interactive web interface to explore spatial gene expressio
 | 🧩 Telencephalon (forebrain) | 1 |
 | 🔷 Thalamencephalon (diencephalon) | 3 |
 
+[![Spatial clusters overview](spatial_clusters.png)](spatial_clusters.pdf)
+
 ## ✨ Features
 
-- **Spatial visualization**: View gene expression patterns in their spatial context
-- **PCA projection**: Explore cell clusters in 3D reduced dimensional space
-- **Gene expression plots**: Visualize expression levels across cell clusters
-- **Differential expression**: Identify marker genes for each cluster
-- **Annotated gene names**: Gene IDs mapped to Axolotl Tanaka annotations (~8,200 genes)
-- **Fast loading**: Cached data for responsive interactions after initial load
+- **Spatial visualization** — spot-level gene expression in spatial coordinates
+- **UMAP projection** — 2D UMAP with cluster overlays, pre-computed for all datasets
+- **Cluster overlays** — Leiden clustering, structure annotation, or Seurat clusters
+- **Gene expression overlay** — per-gene expression mapped to both UMAP and spatial plots
+- **G2M cell-cycle score** — computed on demand from canonical marker genes, shown on both plots
+- **Annotated gene names** — AMEX gene IDs mapped to Axolotl Tanaka annotations
+- **Fast loading** — full in-memory cache with mtime-based invalidation; gene choices pre-built per file
 
 ---
 
@@ -32,26 +35,18 @@ Metalotl provides an interactive web interface to explore spatial gene expressio
 
 ### Requirements
 - Python 3.12 or higher
-- A package manager: [conda](https://docs.conda.io/) or [mamba](https://mamba.readthedocs.io/) (recommended)
+- [conda](https://docs.conda.io/) or [mamba](https://mamba.readthedocs.io/) (recommended)
 
-### Setup Instructions
-
-**a. On a remote server:** Connect via SSH  
-**b. On a local machine (MacOS):** Open Terminal  
-**c. On a local machine (Windows):** Press `Windows key` + `X`, select Windows Terminal
+### Setup
 
 ```bash
-# Create a new conda environment
+# Create and activate environment
 mamba create -n metalotl python=3.12
-
-# Activate the environment
 mamba activate metalotl
 
 # Clone the repository
-git clone --branch main https://github.com/quadbio/metalotl.git
-
-# Navigate to the directory
-cd metalotl
+git clone --branch main https://github.com/SebastianBohm/Metalotl.git
+cd Metalotl
 
 # Install the package
 pip install -e .
@@ -63,74 +58,76 @@ pip install -e .
 
 ### Required Files
 
-Place the `.h5ad` data files in the `data/` directory:
+Place the processed `.h5ad` files and the annotation CSV in `data/`:
 
 ```
 data/
-├── Meta_metencephalon_rep1_DP8400015649BR_C1-2_region_ann.h5ad
-├── Meta_metencephalon_rep2_DP8400015649BR_C1-1_region_ann.h5ad
-├── Meta_olfactory_bulb_rep1_DP8400015234BL_B2-1_region_ann.h5ad
-├── Meta_olfactory_bulb_rep2_DP8400015234BL_B3-1_region_ann.h5ad
-├── Meta_pituitary_rep5_DP8400015234BL_B3-2_region_ann.h5ad
-├── Meta_telencephalon_rep3_DP8400015234BL_B5-1_region_ann.h5ad
-├── Meta_thalamencephalon_rep1_DP8400015234BL_B4-1_region_ann.h5ad
-├── Meta_thalamencephalon_rep3_DP8400015234BL_B5-2_region_ann.h5ad
-├── Meta_thalamencephalon_rep5_DP8400015234BL_B3-2_region_ann.h5ad
-├── Adult_meta_DGE_markers.csv
-├── genes.npy
-└── samples.npy
+├── Meta_metencephalon_rep1_DP8400015649BR_C1-2_final.h5ad
+├── Meta_metencephalon_rep2_DP8400015649BR_C1-1_final.h5ad
+├── Meta_olfactory_bulb_rep1_DP8400015234BL_B2-1_final.h5ad
+├── Meta_olfactory_bulb_rep2_DP8400015234BL_B3-1_final.h5ad
+├── Meta_pituitary_rep5_DP8400015234BL_B3-2_final.h5ad
+├── Meta_telencephalon_rep3_DP8400015234BL_B5-1_final.h5ad
+├── Meta_thalamencephalon_rep1_DP8400015234BL_B4-1_final.h5ad
+├── Meta_thalamencephalon_rep3_DP8400015234BL_B5-2_final.h5ad
+├── Meta_thalamencephalon_rep5_DP8400015234BL_B3-2_final.h5ad
+└── Adult_meta_DGE_markers.csv
 ```
 
-### Gene Annotations
+Each `.h5ad` file must contain:
+- `adata.obsm['spatial']` — spot coordinates
+- `adata.obsm['X_umap']` — 2D UMAP (run `scripts/precompute_umap.py` if missing)
+- A clustering column in `adata.obs` (`spatial_leiden_e30_s8`, `structure`, or `seurat_clusters`)
 
-Gene annotations are automatically loaded from `data/Adult_meta_DGE_markers.csv`.
+### Pre-computing UMAP
+
+If the h5ad files don't yet have `X_umap`, run once:
+
+```bash
+mamba activate metalotl
+python scripts/precompute_umap.py
+```
 
 ---
 
 ## 🖥️ Running the App
 
-### On a Local Machine
+### Local Machine
 
 ```bash
-# Activate the environment
 mamba activate metalotl
-
-# Navigate to the project directory
-cd metalotl
-
-# Run the Shiny app
-shiny run src/metalotl/app.py
+python -m shiny run src/metalotl/app.py
 ```
 
-Open your browser: **http://localhost:8000**
+Open your browser at **http://localhost:8000**
 
-### On a Remote Server
+### Remote Server
 
 1. Connect with port forwarding:
 ```bash
 ssh -L 12345:localhost:8000 username@server
 ```
 
-2. On the server, run:
+2. On the server:
 ```bash
 mamba activate metalotl
-cd metalotl
-shiny run src/metalotl/app.py --port 8000
+cd Metalotl
+python -m shiny run src/metalotl/app.py --port 8000
 ```
 
-3. Access locally at: **http://localhost:12345**
+3. Open locally at **http://localhost:12345**
 
 ---
 
 ## 🎮 Usage Guide
 
-1. **Select a dataset** from the dropdown menu
-2. **Choose clustering** (Leiden clustering, Structure annotation, or Seurat clusters)
-3. **Toggle cluster visualization** with the "Show clusters" switch
-4. **Search for a gene** using the annotated gene names (e.g., "GLUL", "GAD1")
-5. **Enable expression plotting** with the "Plot gene expression" switch
-6. **Adjust visualization** using the dot size sliders
-7. **Explore markers** in the differential expression accordion panel
+1. **Select a dataset** from the dropdown — the app auto-discovers all `_final.h5ad` files in `data/`
+2. **Choose a clustering** resolution (Leiden, Structure annotation, or Seurat clusters)
+3. **Toggle cluster colours** with the "Show clusters" switch
+4. **Search for a gene** — the dropdown is filtered to genes present in the selected dataset, with annotated names
+5. **Plot expression** — enable "Plot gene expression" to overlay expression on both UMAP and spatial plots
+6. **G2M score** — enable "Show G2M score" to visualise cell-cycle activity
+7. **Adjust dot sizes** with the UMAP and Space sliders independently
 
 ---
 
@@ -138,23 +135,21 @@ shiny run src/metalotl/app.py --port 8000
 
 ```
 Metalotl/
-├── data/                       # H5AD data files
-├── src/metalotl/
-│   ├── __init__.py
-│   ├── _constants.py           # Configuration & gene annotations
-│   ├── app.py                  # Main Shiny app entry point
-│   ├── fct/
-│   │   ├── expression.py       # Gene expression plotting
-│   │   ├── load.py             # Data loading with caching
-│   │   ├── spatial_widget.py   # Spatial plot functions
-│   │   └── umap_widget.py      # PCA/UMAP plot functions
-│   ├── js/
-│   │   └── _format.py          # Dropdown formatting
-│   └── mod/
-│       ├── server.py           # Shiny server logic
-│       └── ui.py               # Shiny UI definition
+├── data/                       # H5AD data files + annotation CSV
 ├── scripts/
-│   └── create_tarball.sh       # Data packaging script
+│   └── precompute_umap.py      # One-time UMAP pre-computation script
+├── src/metalotl/
+│   ├── app.py                  # Shiny app entry point
+│   ├── _constants.py           # Dataset discovery, gene annotations, G2M genes
+│   ├── fct/
+│   │   ├── load.py             # Data loading with in-memory mtime cache
+│   │   ├── spatial_widget.py   # Spatial plot (clusters + expression)
+│   │   └── umap_widget.py      # UMAP plot (clusters + expression + G2M)
+│   ├── js/
+│   │   └── _format.py          # Selectize dropdown formatting
+│   └── mod/
+│       ├── server.py           # Shiny reactive server logic
+│       └── ui.py               # Shiny UI layout
 ├── setup.py
 ├── pyproject.toml
 └── README.md
@@ -162,21 +157,23 @@ Metalotl/
 
 ---
 
-## 🔧 Dependencies
+## 📈 QC Summary
 
-| Package | Purpose |
-|---------|---------|
-| [Shiny for Python](https://shiny.posit.co/py/) | Web application framework |
-| [Scanpy](https://scanpy.readthedocs.io/) | Single-cell analysis |
-| [Plotly](https://plotly.com/python/) | Interactive visualizations |
-| [Glasbey](https://github.com/lmcinnes/glasbey) | Color palette generation |
-| [Pandas](https://pandas.pydata.org/) | Data manipulation |
-| [NumPy](https://numpy.org/) | Numerical computing |
+| Sample | Brain Region | Median Genes | Median UMIs | Cells |
+|--------|-------------|-------------:|------------:|------:|
+| Meta_olfactory_bulb_rep1_…B2-1 | olfactory_bulb | 1,062 | 1,146 | 5,370 |
+| Meta_olfactory_bulb_rep2_…B3-1 | olfactory_bulb | 1,821 | 2,127 | 5,989 |
+| Meta_telencephalon_rep3_…B5-1 | telencephalon | 1,083 | 1,110 | 6,669 |
+| Meta_thalamencephalon_rep1_…B4-1 | thalamencephalon | 1,589 | 1,805 | 3,013 |
+| Meta_thalamencephalon_rep3_…B5-2 | thalamencephalon | 864 | 913 | 3,537 |
+| Meta_thalamencephalon_rep5_…B3-2 | thalamencephalon | 959 | 1,065 | 2,524 |
+| Meta_metencephalon_rep1_…C1-2 | metencephalon | 1,191 | 1,436 | 3,219 |
+| Meta_metencephalon_rep2_…C1-1 | metencephalon | 515 | 566 | 1,167 |
+| Meta_pituitary_rep5_…B3-2 | pituitary | 856 | 931 | 1,641 |
 
 ---
 
 ## 🙏 Acknowledgments
 
 - **Adnan** for the template
-
----
+- **Mateja** for discovering the data

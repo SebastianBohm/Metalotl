@@ -5,53 +5,43 @@ import pandas as pd
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = BASE_DIR / 'data'
 
-# Possible clustering options - will be filtered based on what's available in each dataset
+# Clustering columns present in the datasets, in preference order
 CLUSTERING_OPTIONS = {
     'spatial_leiden_e30_s8': 'Leiden clustering',
     'structure': 'Structure annotation',
-    'seurat_clusters': 'Seurat clusters'
+    'seurat_clusters': 'Seurat clusters',
 }
 
-DATA = np.load(DATA_DIR / 'samples.npy', allow_pickle=True).tolist()
+# Discover datasets from *_final.h5ad files in data/
+try:
+    DATA = sorted([p.stem.replace('_final', '') for p in DATA_DIR.glob('*_final.h5ad')])
+    if not DATA:
+        DATA = np.load(DATA_DIR / 'samples.npy', allow_pickle=True).tolist()
+except Exception:
+    DATA = []
 
-# Load annotation metadata for differential gene expression markers
+# Gene annotation lookup: AMEX gene_id -> annotated gene name
 ANNOTATION_FILE = DATA_DIR / 'Adult_meta_DGE_markers.csv'
 try:
-    ANNOTATION_DF = pd.read_csv(ANNOTATION_FILE, index_col=0, low_memory=False)
-    
-    # Create gene annotation lookup (AMEX gene_id -> annotated gene name)
+    _ann_df = pd.read_csv(ANNOTATION_FILE, index_col=0, low_memory=False)
+    _ann_df = _ann_df[~_ann_df.index.duplicated(keep='first')]
     GENE_ANNOTATION = {}
-    for gene_id in ANNOTATION_DF.index.unique():
-        row = ANNOTATION_DF.loc[gene_id]
-        if isinstance(row, pd.DataFrame):
-            row = row.iloc[0]
-        # Get Axolotl_tanaka_annotated_gene
-        gene_name = row.get('Axolotl_tanaka_annotated_gene', None)
-        if pd.isna(gene_name) or gene_name == '-' or gene_name == 'N/A' or gene_name is None:
-            gene_name = gene_id  # fallback to AMEX ID
-        GENE_ANNOTATION[gene_id] = gene_name
-
-    # Get unique cell types from the DGE markers
-    CELLTYPES = sorted(ANNOTATION_DF['Celltype'].unique().tolist())
-except FileNotFoundError:
-    ANNOTATION_DF = None
+    for gene_id, row in _ann_df.iterrows():
+        name = row.get('Axolotl_tanaka_annotated_gene', None)
+        if pd.isna(name) or name in ('-', 'N/A') or name is None:
+            name = gene_id
+        GENE_ANNOTATION[str(gene_id)] = str(name)
+    del _ann_df
+except Exception:
     GENE_ANNOTATION = {}
-    CELLTYPES = []
 
-# Load genes from npy and create display labels using annotations
-GENES_AMEX = np.load(DATA_DIR / 'genes.npy', allow_pickle=True).tolist()
+# Set of annotated display names — used to identify expression traces for removal
+GENES_LABEL = set(GENE_ANNOTATION.values())
 
-# Create gene choices for dropdown: display annotated name but use AMEX ID as value
-# Format: {amex_id: annotated_name} for genes that have annotations
-GENES_DISPLAY = {}
-for amex_id in GENES_AMEX:
-    if amex_id in GENE_ANNOTATION:
-        annotated = GENE_ANNOTATION[amex_id]
-        # Show "AnnotatedName (AMEX_ID)" for clarity
-        GENES_DISPLAY[amex_id] = f"{annotated} ({amex_id})" if annotated != amex_id else amex_id
-    else:
-        GENES_DISPLAY[amex_id] = amex_id
-
-# For backwards compatibility
-GENES = GENES_AMEX
-GENES_LABEL = [GENE_ANNOTATION.get(g, g) for g in GENES_AMEX]
+# G2M marker genes used to compute a proliferation score
+G2M_GENES = [
+    'MKI67', 'TOP2A', 'CCNB1', 'CCNB2', 'CCNA2', 'CDC20', 'PLK1', 'AURKA', 'AURKB',
+    'BUB1', 'BUB1B', 'CENPA', 'CENPE', 'CENPF', 'KIF11', 'KIF20A', 'KIF23', 'NUSAP1',
+    'TPX2', 'UBE2C', 'BIRC5', 'NUF2', 'PRC1', 'SMC1A', 'NEK2', 'DLGAP5', 'H2AZ1',
+    'PTTG1', 'CDK1', 'HMGB2'
+]

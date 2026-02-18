@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 import scanpy as sc
 from metalotl._constants import DATA_DIR, GENE_ANNOTATION
 
@@ -7,12 +8,28 @@ from metalotl._constants import DATA_DIR, GENE_ANNOTATION
 _data_cache: dict = {}
 
 
+def _rename_amex_var_names(adata) -> None:
+    """Rename any raw AMEX gene IDs in adata.var_names to annotated names in-place.
+
+    The _final.h5ad files were saved before the notebook's gene-renaming step ran,
+    so var_names may contain a mix of AMEX IDs and already-annotated names.
+    We apply GENE_ANNOTATION to every var_name, falling back to the original name
+    when no annotation exists (preserving already-annotated names unchanged).
+    """
+    new_names = [GENE_ANNOTATION.get(str(g), str(g)) for g in adata.var_names]
+    adata.var_names = pd.Index(new_names)
+    adata.var_names_make_unique()
+
+
 def _build_gene_choices(adata) -> dict:
-    """Build the selectize choices dict from adata.var_names — called once per file."""
+    """Build the selectize choices dict from adata.var_names — called once per file.
+
+    At this point var_names are already annotated display names, so the label
+    is just the name itself (no AMEX ID suffix needed).
+    """
     choices = {'': ''}
-    for gene_id in map(str, adata.var_names):
-        annotated = GENE_ANNOTATION.get(gene_id, gene_id)
-        choices[gene_id] = f"{annotated} ({gene_id})" if annotated != gene_id else gene_id
+    for name in map(str, adata.var_names):
+        choices[name] = name
     return choices
 
 
@@ -27,6 +44,7 @@ def _load_h5ad(filepath):
         mtime = os.path.getmtime(filepath)
     except Exception:
         adata = sc.read_h5ad(filepath)
+        _rename_amex_var_names(adata)
         return adata, _build_gene_choices(adata)
 
     entry = _data_cache.get(filepath)
@@ -36,6 +54,7 @@ def _load_h5ad(filepath):
             return cached_adata, cached_choices
 
     adata = sc.read_h5ad(filepath)
+    _rename_amex_var_names(adata)
     choices = _build_gene_choices(adata)
     _data_cache[filepath] = (adata, choices, mtime)
     return adata, choices

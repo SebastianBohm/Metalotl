@@ -4,3 +4,6 @@ __pycache__/
 scripts/statistics/
 *.tar.gz
 Adult_meta_DGE_markers.csv
+results/
+result/
+data_orig/

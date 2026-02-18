@@ -74,20 +74,6 @@ data/
 └── Adult_meta_DGE_markers.csv
 ```
 
-Each `.h5ad` file must contain:
-- `adata.obsm['spatial']` — spot coordinates
-- `adata.obsm['X_umap']` — 2D UMAP (run `scripts/precompute_umap.py` if missing)
-- A clustering column in `adata.obs` (`spatial_leiden_e30_s8`, `structure`, or `seurat_clusters`)
-
-### Pre-computing UMAP
-
-If the h5ad files don't yet have `X_umap`, run once:
-
-```bash
-mamba activate metalotl
-python scripts/precompute_umap.py
-```
-
 ---
 
 ## 🖥️ Running the App

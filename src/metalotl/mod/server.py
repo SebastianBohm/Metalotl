@@ -1,6 +1,7 @@
 from shiny import reactive, render, ui
 from shinywidgets import render_widget
 
+from metalotl._constants import CLUSTERING_OPTIONS
 from metalotl.fct.load import get_data as _get_data, get_gene_choices as _get_gene_choices
 
 from metalotl.fct.umap_widget import plot_umap as _plot_umap
@@ -24,6 +25,17 @@ def server(input, output, session):
     def update_gene_choices():
         choices = _get_gene_choices(input)
         ui.update_selectize("select_gene", choices=choices, selected=None, session=session)
+
+    # Update resolution selector to only show clustering columns present in the dataset
+    @reactive.effect
+    def update_resolution_choices():
+        adata = _get_data(input)
+        if adata is None:
+            ui.update_selectize("select_resolution", choices={}, selected=None, session=session)
+            return
+        available = {k: v for k, v in CLUSTERING_OPTIONS.items() if k in adata.obs.columns}
+        first = next(iter(available), None)
+        ui.update_selectize("select_resolution", choices=available, selected=first, session=session)
 
     # Set up the UMAP/PCA widget (primary) - show clusters only
     @render_widget

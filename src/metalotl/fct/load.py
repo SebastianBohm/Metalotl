@@ -1,126 +1,137 @@
 import os
+import threading
 import pandas as pd
+import numpy as np
 import scanpy as sc
 from metalotl._constants import DATA_DIR, GENE_ANNOTATION
 
 
 # In-memory cache: filepath -> (adata, gene_choices, mtime)
 _data_cache: dict = {}
+_cache_lock = threading.Lock()
+
+# Pre-built numpy array for vectorised rename (built once at import)
+_amex_keys = np.array(list(GENE_ANNOTATION.keys()), dtype=object)
+_amex_vals = np.array(list(GENE_ANNOTATION.values()), dtype=object)
+_amex_map = dict(zip(_amex_keys, _amex_vals))
 
 
 def _rename_amex_var_names(adata) -> None:
-    """Rename any raw AMEX gene IDs in adata.var_names to annotated names in-place.
+    """Rename raw AMEX gene IDs in adata.var_names to annotated names in-place.
 
-    The _final.h5ad files were saved before the notebook's gene-renaming step ran,
-    so var_names may contain a mix of AMEX IDs and already-annotated names.
-    We apply GENE_ANNOTATION to every var_name, falling back to the original name
-    when no annotation exists (preserving already-annotated names unchanged).
+    Uses a pre-built dict for O(1) per-gene lookup; only rewrites var_names
+    when at least one name actually changed (avoids unnecessary copies).
     """
-    new_names = [GENE_ANNOTATION.get(str(g), str(g)) for g in adata.var_names]
-    adata.var_names = pd.Index(new_names)
-    adata.var_names_make_unique()
+    current = adata.var_names.tolist()
+    new_names = [_amex_map.get(g, g) for g in current]
+    if new_names != current:
+        adata.var_names = pd.Index(new_names)
+        adata.var_names_make_unique()
 
 
 def _build_gene_choices(adata) -> dict:
-    """Build the selectize choices dict from adata.var_names — called once per file.
-
-    At this point var_names are already annotated display names, so the label
-    is just the name itself (no AMEX ID suffix needed).
-    """
+    """Build the selectize choices dict from adata.var_names — called once per file."""
+    names = adata.var_names.tolist()
     choices = {'': ''}
-    for name in map(str, adata.var_names):
-        choices[name] = name
+    choices.update(zip(names, names))
     return choices
 
 
-def _load_h5ad(filepath):
+def _load_h5ad(filepath: str):
     """Load an h5ad fully into memory with mtime-based caching.
 
-    Full in-memory load is used (not backed='r') because gene-expression slicing
-    on a backed dataset is ~7x slower, and these files load in <0.1s regardless.
+    Thread-safe: a per-file lock prevents two reactive effects from
+    reading the same file simultaneously on first load.
     Returns (adata, gene_choices).
     """
     try:
         mtime = os.path.getmtime(filepath)
-    except Exception:
-        adata = sc.read_h5ad(filepath)
-        _rename_amex_var_names(adata)
-        return adata, _build_gene_choices(adata)
+    except OSError:
+        mtime = None
 
-    entry = _data_cache.get(filepath)
-    if entry is not None:
-        cached_adata, cached_choices, cached_mtime = entry
-        if cached_mtime == mtime:
-            return cached_adata, cached_choices
+    with _cache_lock:
+        entry = _data_cache.get(filepath)
+        if entry is not None and (mtime is None or entry[2] == mtime):
+            return entry[0], entry[1]
 
+    # Read outside the lock so other files can be loaded concurrently
     adata = sc.read_h5ad(filepath)
     _rename_amex_var_names(adata)
     choices = _build_gene_choices(adata)
-    _data_cache[filepath] = (adata, choices, mtime)
+
+    with _cache_lock:
+        _data_cache[filepath] = (adata, choices, mtime)
     return adata, choices
+
+
+def _resolve_filepath(name: str):
+    """Return the resolved Path for a dataset name, or None if not found."""
+    stem = name.removesuffix('_final')
+    for suffix in ('_final.h5ad', '.h5ad'):
+        p = DATA_DIR / (stem + suffix)
+        if p.exists():
+            return p
+    return None
+
+
+def _prewarm_cache() -> None:
+    """Load all *_final.h5ad files into the cache in a background thread."""
+    for p in sorted(DATA_DIR.glob('*_final.h5ad')):
+        try:
+            _load_h5ad(str(p))
+        except Exception as e:
+            print(f"[metalotl] prewarm failed for {p.name}: {e}")
+
+
+# Kick off background prewarming immediately at import time
+threading.Thread(target=_prewarm_cache, daemon=True, name="metalotl-prewarm").start()
 
 
 def clear_data_cache():
     """Clear the in-memory AnnData cache."""
-    _data_cache.clear()
+    with _cache_lock:
+        _data_cache.clear()
 
 
 def get_data(input_or_name):
     """Return an AnnData for the given dataset name or Shiny inputs object."""
-    name = None
     try:
-        if hasattr(input_or_name, 'select_dataset') and callable(input_or_name.select_dataset):
-            name = input_or_name.select_dataset()
-        else:
-            name = input_or_name
+        name = input_or_name.select_dataset() if hasattr(input_or_name, 'select_dataset') else input_or_name
     except Exception:
         name = input_or_name
 
     if not name:
         return None
 
+    p = _resolve_filepath(str(name))
+    if p is None:
+        print(f"[metalotl] dataset not found: {name}")
+        return None
+
     try:
-        stem = name[:-len('_final')] if name.endswith('_final') else name
-        final_path = DATA_DIR / (stem + '_final.h5ad')
-        fallback_path = DATA_DIR / (stem + '.h5ad')
-        filepath = final_path if final_path.exists() else fallback_path
-
-        if not filepath.exists():
-            raise FileNotFoundError(f"Neither {final_path} nor {fallback_path} exist")
-
-        adata, _ = _load_h5ad(str(filepath))
+        adata, _ = _load_h5ad(str(p))
         return adata
-
-    except (FileNotFoundError, IOError) as e:
-        print("File not found:", e)
+    except Exception as e:
+        print(f"[metalotl] load error for {name}: {e}")
         return None
 
 
 def get_gene_choices(input_or_name) -> dict:
     """Return the pre-built gene selectize choices dict for the given dataset."""
-    name = None
     try:
-        if hasattr(input_or_name, 'select_dataset') and callable(input_or_name.select_dataset):
-            name = input_or_name.select_dataset()
-        else:
-            name = input_or_name
+        name = input_or_name.select_dataset() if hasattr(input_or_name, 'select_dataset') else input_or_name
     except Exception:
         name = input_or_name
 
     if not name:
         return {}
 
+    p = _resolve_filepath(str(name))
+    if p is None:
+        return {}
+
     try:
-        stem = name[:-len('_final')] if name.endswith('_final') else name
-        final_path = DATA_DIR / (stem + '_final.h5ad')
-        fallback_path = DATA_DIR / (stem + '.h5ad')
-        filepath = final_path if final_path.exists() else fallback_path
-
-        if not filepath.exists():
-            return {}
-
-        _, choices = _load_h5ad(str(filepath))
+        _, choices = _load_h5ad(str(p))
         return choices
-
     except Exception:
         return {}

@@ -25,7 +25,8 @@ app_ui = ui.page_navbar(
                 ui.input_selectize(
                     "select_resolution",
                     "Cluster resolution",
-                    CLUSTERING_OPTIONS,
+                    choices={},
+                    selected=None,
                     ),
                 ui.input_switch("switch_clusters", "Show clusters", True),
                 ui.input_selectize(

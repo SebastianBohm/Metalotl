@@ -1,4 +1,5 @@
 data/
+.DS_Store
 .ipynb_checkpoints/
 __pycache__/
 scripts/statistics/
@@ -7,3 +8,4 @@ Adult_meta_DGE_markers.csv
 results/
 result/
 data_orig/
+explore_data.ipynb
